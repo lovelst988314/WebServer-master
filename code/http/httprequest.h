@@ -82,8 +82,8 @@ private:
 
     PARSE_STATE state_;  // 当前解析状态
     std::string method_, path_, version_, body_;  //存储 HTTP 请求的方法、路径、版本和请求体。
-    std::unordered_map<std::string, std::string> header_;  // 存储请求头
-    std::unordered_map<std::string, std::string> post_;  // 存储 POST 请求参数
+    std::unordered_map<std::string, std::string> header_;   // 存储请求头 
+    std::unordered_map<std::string, std::string> post_;    // 存储 POST 请求参数
 
     static const std::unordered_set<std::string> DEFAULT_HTML;  // 默认 HTML 文件集合
     static const std::unordered_map<std::string, int> DEFAULT_HTML_TAG;  // 默认 HTML 文件标签映射

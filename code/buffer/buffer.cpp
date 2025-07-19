@@ -25,12 +25,12 @@ const char* Buffer::Peek() const {
 void Buffer::Retrieve(size_t len) {
     assert(len <= ReadableBytes());
     readPos_ += len;
-}
+}  // 该函数从缓冲区中检索指定长度的数据，更新读取位置。
 
 void Buffer::RetrieveUntil(const char* end) {
     assert(Peek() <= end );
     Retrieve(end - Peek());
-}
+}  // 该函数从缓冲区中检索数据，直到指定的结束指针为止。
 
 void Buffer::RetrieveAll() {
     bzero(&buffer_[0], buffer_.size());

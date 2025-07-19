@@ -186,60 +186,64 @@ void HttpRequest::ParseFromUrlencoded_() {
 bool HttpRequest::UserVerify(const string &name, const string &pwd, bool isLogin) {
     if(name == "" || pwd == "") { return false; }  //输入为空
     LOG_INFO("Verify name:%s pwd:%s", name.c_str(), pwd.c_str());
-    MYSQL* sql;  //连接数据库
-    SqlConnRAII(&sql,  SqlConnPool::Instance());  //获取连接
-    assert(sql);
+    MYSQL* sql;  
+    SqlConnRAII(&sql,  SqlConnPool::Instance());  //从连接池中获取一个数据库连接。
+    assert(sql);  //确保连接成功，否则程序终止。
     
-    bool flag = false;
-    unsigned int j = 0;
-    char order[256] = { 0 };
-    MYSQL_FIELD *fields = nullptr;
-    MYSQL_RES *res = nullptr;
+    bool flag = false;  //表示是否成功（登录或注册）
+    unsigned int j = 0;  //字段数量
+    char order[256] = { 0 };  //SQL语句
+    MYSQL_FIELD *fields = nullptr;  //字段信息
+    MYSQL_RES *res = nullptr;  //结果集
     
-    if(!isLogin) { flag = true; }
+    if(!isLogin) { flag = true; }   //注册行为，默认用户名未被使用
     /* 查询用户及密码 */
     snprintf(order, 256, "SELECT username, password FROM user WHERE username='%s' LIMIT 1", name.c_str());
-    LOG_DEBUG("%s", order);
+    // 生成 SQL 查询语句，查询指定用户名的用户信息
+    LOG_DEBUG("%s", order);  //打印 SQL 语句
 
-    if(mysql_query(sql, order)) { 
-        mysql_free_result(res);
+    if(mysql_query(sql, order)) {     //执行 SQL 语句
+        mysql_free_result(res);  // 释放结果集
         return false; 
-    }
-    res = mysql_store_result(sql);
-    j = mysql_num_fields(res);
-    fields = mysql_fetch_fields(res);
+    } // 如果查询失败，释放结果集并返回 false。
+
+    res = mysql_store_result(sql);  // 获取结果集
+    j = mysql_num_fields(res);   // 获取结果集中的字段数量
+    fields = mysql_fetch_fields(res);  // 获取字段信息
 
     while(MYSQL_ROW row = mysql_fetch_row(res)) {
-        LOG_DEBUG("MYSQL ROW: %s %s", row[0], row[1]);
-        string password(row[1]);
+        LOG_DEBUG("MYSQL ROW: %s %s", row[0], row[1]);  // 打印结果集中的数据
+        string password(row[1]);                       // 获取查询到的密码
         /* 注册行为 且 用户名未被使用*/
         if(isLogin) {
-            if(pwd == password) { flag = true; }
+            if(pwd == password) { flag = true; }  // 密码匹配
             else {
                 flag = false;
                 LOG_DEBUG("pwd error!");
             }
         } 
         else { 
-            flag = false; 
+            flag = false;    // 用户名被使用
             LOG_DEBUG("user used!");
         }
     }
-    mysql_free_result(res);
+    mysql_free_result(res);  // 释放结果集
 
     /* 注册行为 且 用户名未被使用*/
-    if(!isLogin && flag == true) {
+    if(!isLogin && flag == true) {  //
         LOG_DEBUG("regirster!");
-        bzero(order, 256);
-        snprintf(order, 256,"INSERT INTO user(username, password) VALUES('%s','%s')", name.c_str(), pwd.c_str());
+        bzero(order, 256);  // 清空
+        snprintf(order, 256,"INSERT INTO user(username, password) VALUES('%s','%s')", name.c_str(), pwd.c_str());  
+        // 生成 SQL 插入语句，将用户名和密码插入到 user 表中
         LOG_DEBUG( "%s", order);
-        if(mysql_query(sql, order)) { 
+        if(mysql_query(sql, order)) {   
+            // 执行 SQL 插入语句  失败执行下面代码
             LOG_DEBUG( "Insert error!");
             flag = false; 
         }
         flag = true;
     }
-    SqlConnPool::Instance()->FreeConn(sql);
+    SqlConnPool::Instance()->FreeConn(sql);  // 释放数据库连接
     LOG_DEBUG( "UserVerify success!!");
     return flag;
 }
